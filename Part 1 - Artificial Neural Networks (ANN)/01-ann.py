@@ -3,7 +3,7 @@
 # Instalar Keras desde Anaconda
 # conda install -c conda-forge keras
 
-# Para importar lobrerias desde aqui utilizar pip en vez de pip3
+# Para importar librerias desde Spyder utilizar pip en vez de pip3
 
 # Part 1 - Procesando el Data
 
@@ -37,18 +37,15 @@ X = np.array(columnTransformer.fit_transform(X), dtype=str)
 # Eliminamos la primera columna, ya que si la fila 2 y la 3 es igual a 0, entonces sabremos que es frances
 X = X[:, 1:]
 
-
 # Dividimos el data en conjunto de entrenamiento y testing
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
-
 
 # Escalado de variable
 from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
-
 
 
 # Part 2 - Contruir la RNA (Red neuronales artificales)
@@ -68,26 +65,44 @@ classifier = Sequential()
 # Y por ultimo el input_dim, que son los nodos de entrada, que son nuestras 11 variables
 classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu', input_dim = 11))
 
-# Adding the second hidden layer
+# Añadiremos una segunda capa oculta, esta segunda capa ya sabe los parametros de entrada, asi que no los ponemos
 classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu'))
 
-# Adding the output layer
+# Añadiremos la capa de salida, por lo tanto necesitamos solo 1 nodo en la capa de salida
+# Pero la capa de activacion la pondremos como sigmoid para que tenga como valor 0 o 1
 classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
 
-# Compiling the ANN
+# Debemos compilar nuestra Red Neuronal Artificial
+# optimizer: se encarga de optimizar, el de serie es adam
+# loss: corresponde a la funcion de perdida, quien minimiza el error, utilizamos binary_crossentropy , para transformar las categorias en numeros
+# metrics: es la precicion, utilizamos accuracy
 classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 
-# Fitting the ANN to the Training set
+# Ajustamos la RNA al conjunto de entrenamiento
+# Primero agregamos el conjunto a entrenar: X_train y el segundo es el que quiero prececir: y_train
+# batch_size: Corresponde al numero de bloques (procesa 10 elemento y luego corrige los pesos)
+# epochs: son las repeticiones (iteraciones)
 classifier.fit(X_train, y_train, batch_size = 10, epochs = 100)
 
-"""
+# Podemos ver que en la ultima iteracion:
+#Epoch 100/100
+#800/800 ━━━━━━━━━━━━━━━━━━━━ 1s 1ms/step - accuracy: 0.8298 - loss: 0.4107 
+
+# Que significa? que cada 100 datos que le suministremos, un 83% realizara una buena prediccion 
+
+
 # Part 3 - Evaluar el modelo y calcular prediccion final
 
-# Predicting the Test set results
+# Prediccion de los resultados con el Conjunto de Testing
 y_pred = classifier.predict(X_test)
+# Seleccionaremos el y_pred y podemos ver que el cliente 5 y 9 tiene mas probabilidad de avandonar el banco
+# Podemos filtrar si solo queremos ver los clientes a un mayor al 50% en la prediccion
 y_pred = (y_pred > 0.5)
+# Vemos que ahora lo transformamos en Booleano, para ver si avandona o no 
 
-# Making the Confusion Matrix
+# Elaboraremos una matriz de confusion para visualizar mejor estos datos
 from sklearn.metrics import confusion_matrix
 cm = confusion_matrix(y_test, y_pred)
-"""
+# Ahora podemos seleccionar CM de las variables explorer (derecha supertior de Spyder)
+# de las 2.000 observaciones 1.539 + 143 son predicciones correctas, mientras que 262 + 56 son incorrecta (datos cruzados)
+# Sumamos 1.539 + 143 = 1.682 y los dividimos en 2.000, nos da 84.1%
