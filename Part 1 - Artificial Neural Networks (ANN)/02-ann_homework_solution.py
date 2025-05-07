@@ -1,8 +1,5 @@
 # Artificial Neural Network
 
-# Instalar Keras desde Anaconda
-# conda install -c conda-forge keras
-
 # Para importar librerias desde Spyder utilizar pip en vez de pip3
 
 # Part 1 - Procesando el Data
