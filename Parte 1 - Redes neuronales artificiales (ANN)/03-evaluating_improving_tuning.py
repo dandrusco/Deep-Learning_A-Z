@@ -33,52 +33,7 @@ sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
-# ---------------------------------------------------------------------------
-# Part 2 - Contruir la RNA (Red neuronales artificales)
-
-# Importamos Keras y librerias adicionales
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
-
-# Inicializamos la RNA, añadimos las capas, compilamos y ajustamos la RNA al entrenamiento
-classifier = Sequential()
-classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu', input_dim = 11))
-classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu'))
-classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
-classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
-classifier.fit(X_train, y_train, batch_size = 10, epochs = 100)
-
-# Part 3 - Evaluar el modelo y calcular prediccion final
-
-# Prediccion de los resultados con el Conjunto de Testing
-y_pred = classifier.predict(X_test)
-y_pred = (y_pred > 0.5)
-
-# Predecir una nueva observacion
-"""Utiliza nuestro modelo de RNA para predecir si el cliente con la siguiente informaicon abandonará el banco:
-Geografia: France (0.0, 0)
-Puntaje de credito: 600
-Género: Male (1)
-Edad: 40
-Tendencia: 3
-Balance: 60000
-Numerop de productos: 2
-Tiene tarjeta de credito: Yes (1)
-Cliente activo: Yes (1)
-Renta estimada: 50000"""
-
-# A nuestra nueva prediccion deberemos transformarla ya que antes realizamos un escalado (sc)
-# Crearemos una matriz bidimencional con Numpy para crear una sola fila, para introducir los datos de la nueva observacion
-new_prediction = classifier.predict(sc.transform(np.array([[0.0, 0, 600, 1, 40, 3, 60000, 2, 1, 1, 50000]])))
-new_prediction = (new_prediction > 0.5)
-
-# Elaboraremos una matriz de confusion para visualizar mejor estos datos
-from sklearn.metrics import confusion_matrix
-cm = confusion_matrix(y_test, y_pred)
-
-# ---------------------------------------------------------------------------
-
+# No utilizaremos la parte 2 de Contruir la RNA, ni la Part 3 de Evaluar el modelo y calcular prediccion final
 
 # Part 4 - Evaluar, mejorar y ajustar la RNA
 
@@ -111,14 +66,16 @@ variance = accuracies.std()
 print(mean)
 print(variance)
 
-# Improving the ANN
-# Dropout Regularization to reduce overfitting if needed
+# Mejora de la ANN
+# Regularización de la pérdida de datos para reducir el sobreajuste, si es necesario
 
-# Tuning the ANN
-from keras.wrappers.scikit_learn import KerasClassifier
+# Ajustar la ANN
+from scikeras.wrappers import KerasClassifier
 from sklearn.model_selection import GridSearchCV
 from keras.models import Sequential
 from keras.layers import Dense
+
+# Nuestra funcion ahora recibira un parametro para la optimizacion.
 def build_classifier(optimizer):
     classifier = Sequential()
     classifier.add(Dense(units = 6, kernel_initializer = 'uniform', activation = 'relu', input_dim = 11))
@@ -126,14 +83,30 @@ def build_classifier(optimizer):
     classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
     classifier.compile(optimizer = optimizer, loss = 'binary_crossentropy', metrics = ['accuracy'])
     return classifier
-classifier = KerasClassifier(build_fn = build_classifier)
+
+# Los parametros del KerasClassifier ahora va solo con el build_fn que pasa a llamarse Model, sin batch_size, epochs ni verbose
+classifier = KerasClassifier(model=build_classifier)
+
+# Ahora estos parametros los meteremos en un diccionario para que combiene los valores 
+# en batch_size pondremos potencias de 2: 25 y 32
+# La iteraciones pondremos 100 y 500
+# Y en la opcimizacion podremos dos 'adam' y 'rmsprop'
 parameters = {'batch_size': [25, 32],
               'epochs': [100, 500],
-              'optimizer': ['adam', 'rmsprop']}
+              'model__optimizer': ['adam', 'rmsprop']}
+
+# Ahora definiremos el objeto GridSearchCV, el estimator sera classifier y param_grid corresponde a los parameters
+# La metrica en scoring sera la accuracy y por ultimo la cros validation sera de 10)
 grid_search = GridSearchCV(estimator = classifier,
                            param_grid = parameters,
                            scoring = 'accuracy',
                            cv = 10)
+
+# Ahora es el ultimo de ajustar los datos de X_train para lograr predecir la y_train
 grid_search = grid_search.fit(X_train, y_train)
+
+# Nos quedaremos con los mejores marametros que nos devuelva el grid_search
 best_parameters = grid_search.best_params_
+
+# Y por otro lado nos quedaremos con la mejor precicion de la validacion cruzada
 best_accuracy = grid_search.best_score_
