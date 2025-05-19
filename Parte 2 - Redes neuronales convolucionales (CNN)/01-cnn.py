@@ -87,10 +87,10 @@ test_set = test_datagen.flow_from_directory('dataset/test_set',
                                             class_mode = 'binary')
 
 # Ahora es el turno de que el generador realice el ajuste del modelo con las imagenes del conjunto de entrenamiento
-# steps_per_epoch, son los numeros de pasos por cada epoch, si tenemos 8.000 imagenes, sera este el valor a pasar
-# con epochs es el numero de entrenamiento por imagenes
-# validation_data sera el conjunto de imagenes de validacion
-# Y por ultimo es el numero de paso de validacion, le pasaremos 2.000 validaciones
+# steps_per_epoch, son los numeros de pasos por cada epoch, si tenemos 8.000 imagenes, sera este el valor a pasar / 32
+# con epochs es el numero de entrenamiento por imagenes (32)
+# validation_data sera el conjunto de imagenes de validacion 
+# Y por ultimo es el numero de paso de validacion, le pasaremos 2.000 validaciones / 32
 classifier.fit(training_set,
                          steps_per_epoch = training_set.n // training_set.batch_size,
                          epochs = 25,
