@@ -107,23 +107,56 @@ dataset_test = pd.read_csv('Google_Stock_Price_Test.csv')
 real_stock_price = dataset_test.iloc[:, 1:2].values
 
 # Predecir las acciones de Enero de 2017 con la RNN
+# Juntaremos el dataset de entrenamiento y el de pruebas (uno bajo del otro, axis = 0 )
+# solo nos quedaremos con la columna Open
 dataset_total = pd.concat((dataset_train['Open'], dataset_test['Open']), axis = 0)
+
+# Necesitamos quedarnos con el utimo dia del dataset_train, por lo tanto tomaremos la longitud de todos los datos
+# Y se la restaremos a la longitud de los datos de entrenamiento (1278 - 20), asi ontenemos el ultimo dia del 2016
+# Obtendremos los datos de los 60 dias anteriores (-60), con los : obtenemos los datos de la fecha hacia adelante
+# Por lo tanto obtenemos en esta linea los ultimos 60 dias del 2016 mas los 20 dias del 2017, total 80 dias
 inputs = dataset_total[len(dataset_total) - len(dataset_test) - 60:].values
+# Hasta aqui, hemos creado un vector de fila con 80 datos, unos tras otros, pero nosotros necesitamos en columnas
+# Con reshape pasamos de filas a columnas con (-1,1)
 inputs = inputs.reshape(-1,1)
+# Ahora debemos escalar los datos si o si para que pueda trabajar en esta red neuronal recurrente
+# El Escalado no es necesario hacerlo con fit por que el minimo y maximo ya lo tenemos 
 inputs = sc.transform(inputs)
+
+# Crearemos 1 listas para poder hacer las predicciones
 X_test = []
+
+# Comenzaremos a rellenar los datos con un bucle for, la primera iteracion partira en el 60 y el ultimo sera de 80
+# Para poder predecir los 20 dias del 2017
 for i in range(60, 80):
+    # El X_test se llevara bloques de 60 del imputs, por lo tanto nos vamos 60 dias hacia atras
+    # Como los conjuntos de datos son bidimencionales debemos parasarle un 0 
     X_test.append(inputs[i-60:i, 0])
+
+# Vamos a pescar el conjuntos de X_test para transformarlas en matrices de numpy
 X_test = np.array(X_test)
+# Toca redimencionar los datos. Con reshape agregamos la nueva dimencion
+# El primer argumento es lo que queremos redimencionar, el segundo parametro es una tupla
+# En la tupla le pasamos la nueva estructura, la primera es [0] para obtener el numero de filas
+# la segunda es [1] para el numero de columnas y 1 como variable predictoria 
 X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+
+# Ahora es el turno predecir los 20 dias de enero de 2017, para ello el regressor hara una prediccion del X_test
 predicted_stock_price = regressor.predict(X_test)
+# Como todos los datos los escalamos entre 0 y 1, deberemos revertir la transformacion para ver el dato de la prediccion
 predicted_stock_price = sc.inverse_transform(predicted_stock_price)
 
-# Visualising the results
-plt.plot(real_stock_price, color = 'red', label = 'Real Google Stock Price')
-plt.plot(predicted_stock_price, color = 'blue', label = 'Predicted Google Stock Price')
-plt.title('Google Stock Price Prediction')
-plt.xlabel('Time')
-plt.ylabel('Google Stock Price')
+# Visualizar los resultados
+# Pintamos los valores de real_stock_price (datos reales), de color rojo con la etiqueta 
+plt.plot(real_stock_price, color = 'red', label = 'Precio Real de la Accion de Google')
+# Pintaremos ahora la prediccion de color azul 
+plt.plot(predicted_stock_price, color = 'blue', label = 'Precio Prediccion de la Accion de Google')
+# Le agregamos un titulo 
+plt.title('Prediccion con una RNR del valor de las acciones de Google')
+# Creamos las etiquetas del eje X e Y
+plt.xlabel('Tiempo')
+plt.ylabel('Precio de la accion de Google')
+# Habilitamos la leyenda
 plt.legend()
+# Arrancamos el grafico
 plt.show()
